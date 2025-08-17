@@ -1,0 +1,82 @@
+import Foundation
+ 
+//VARIABLES IMPLÍCITAS (Swift pone el tipo)
+var fruta = "Manzana"           // String (implícito)
+var cantidad = 12               // Int (implícito)
+var precio = 4.99               // Double (implícito)
+var disponible = true           // Bool (implícito)
+var letradeinicial = "M"        // String (implícito) ← OJO: es String, no Character
+ 
+// Hechas en clase (implícitas)
+var nombre = "Petra"            // String
+var ciudad = "México"           // String
+var edad = 10                   // Int
+var altura = 1.72               // Double
+var esEstudiante = true         // Bool
+ 
+//VARIABLES EXPLÍCITAS (yo anoto el tipo)
+var color: String = "Rojo"
+var peso: Double = 1.25
+var dias: Int = 30
+var enOferta: Bool = false
+var simboloEspecial: Character = "#"
+ 
+// Hechas en clase pero modificadas (EXPLÍCITAS)
+var serie: String = "Stranger Things"      // String (explícito)
+var episodios: Int = 34                    // Int (explícito)
+var duracion: Double = 35                  // Double (explícito)
+var cantidadProtagonistas: Int = 13        // Int (explícito)
+var disponibleParaVer: Bool = false        // Bool (explícito)
+ 
+ 
+//constantes implicitas
+let deporteFavorito = "Baloncesto"   // String (implícito)
+let jugadoresPorEquipo = 11          // Int (implícito)
+let duracionPartido = 90.0           // Double (implícito)
+let esDeporteOlimpico = true         // Bool (implícito)
+let lugarCompetencia = "Estadio"     // String (implícito)
+//constantes explicitas
+let deportes: [String] = ["Fútbol", "Baloncesto", "Natación", "Tenis"]// String (explícito) contiene datos que son del mismo tipo en este caso es string
+let pistas: Int = 8                  // Int (explícito)
+let recordMundial: Double = 9.58     // Double (explícito)
+let esPopular: Bool = true           // Bool (explícito)
+let inicialDeporte: Character = "N"  // Character (explícito)
+ 
+//IMPRESIÓN DE TIPOS
+print("El tipo de fruta es: \(type(of: fruta))")
+print("El tipo de cantidad es: \(type(of: cantidad))")
+print("El tipo de precio es: \(type(of: precio))")
+print("El tipo de disponible es: \(type(of: disponible))")
+print("El tipo de letradeinicial es: \(type(of: letradeinicial))")
+ 
+print("El tipo de nombre es: \(type(of: nombre))")
+print("El tipo de ciudad es: \(type(of: ciudad))")
+print("El tipo de edad es: \(type(of: edad))")
+print("El tipo de altura es: \(type(of: altura))")
+print("El tipo de esEstudiante es: \(type(of: esEstudiante))")
+ 
+print("El tipo de color es: \(type(of: color))")
+print("El tipo de peso es: \(type(of: peso))")
+print("El tipo de dias es: \(type(of: dias))")
+print("El tipo de enOferta es: \(type(of: enOferta))")
+print("El tipo de simboloEspecial es: \(type(of: simboloEspecial))")
+ 
+print("El tipo de serie es: \(type(of: serie))")
+print("El tipo de episodios es: \(type(of: episodios))")
+print("El tipo de duracion es: \(type(of: duracion))")
+print("El tipo de cantidadProtagonistas es: \(type(of: cantidadProtagonistas))")
+print("El tipo de disponibleParaVer es: \(type(of: disponibleParaVer))")
+ 
+// Constantes implícitas
+print("Tipo de deporteFavorito: \(type(of: deporteFavorito))")
+print("Tipo de jugadoresPorEquipo: \(type(of: jugadoresPorEquipo))")
+print("Tipo de duracionPartido: \(type(of: duracionPartido))")
+print("Tipo de esDeporteOlimpico: \(type(of: esDeporteOlimpico))")
+print("Tipo de lugarCompetencia: \(type(of: lugarCompetencia))")
+ 
+// Constantes explícitas
+print("Tipo de deportes: \(type(of: deportes))")
+print("Tipo de pistas: \(type(of: pistas))")
+print("Tipo de recordMundial: \(type(of: recordMundial))")
+print("Tipo de esPopular: \(type(of: esPopular))")
+print("Tipo de inicialDeporte: \(type(of: inicialDeporte))")
