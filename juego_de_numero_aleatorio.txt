@@ -1,0 +1,44 @@
+// Número random entre 1 y 100
+let numeroSecreto = Int.random(in: 1...100)
+
+// Inicializamos el contador de intentos
+var intentos = 0
+
+// Función para validar la entrada del usuario (visto en clase)
+func validar_entrada_a_numero() -> Int {
+    var entrada_del_usuario: String? = nil
+    var numero_valido: Int? = nil
+    
+    while true {
+        print("Por favor, introduce un número entre 1 y 100:")
+        entrada_del_usuario = readLine()
+        
+        if entrada_del_usuario == nil {
+            print("Que paso mi hacker, creías que había una vulnerabilidad")
+        }
+        
+        numero_valido = Int(entrada_del_usuario!)
+        
+        if numero_valido == nil {
+            print("Lo que introdujiste no fue un numero, por favor introduce un numero y no letras o caracteres especiales.")
+        } else {
+            return numero_valido!
+        }
+    }
+}
+
+// Bucle para que el jugador intente adivinar el número
+while true {
+    let respuesta_del_usuario = validar_entrada_a_numero() // Obtene la respuesta del usuarioxd
+    intentos += 1 // Incrementar el contador de intentos
+    
+    // se Comprueba si el número es correcto
+    if respuesta_del_usuario == numeroSecreto {
+        print("Adivinaste el número. Tuviste \(intentos) intentos.")
+        break
+    } else if respuesta_del_usuario < numeroSecreto {
+        print("El número es mayor.")
+    } else {
+        print("El número es menor.")
+    }
+}
