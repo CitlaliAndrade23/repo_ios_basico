@@ -1,0 +1,147 @@
+/** 
+Intento replicar una escena del anime "The Rising of the Shield Hero"
+
+Lo que intento replicar:
+las clases son el personaje principal(naofumi),su enemigo final de la segunda ola(Quimera) 
+sus 2 compañeras(filo y Raphtalia) y una de las misiones que tienen en la serie:
+- Naofumi (Héroe del Escudo) que utiliza el Escudo de Ira.
+- Raphtalia como su compañera que ataca con su espada.
+- Filo que puede transformarse y correr con gran velocidad.
+- Un monstruo (Quimera) que aparece como jefe final de la segunda ola de la calamidad.
+- Una misión donde los héroes deben proteger a los aldeanos.
+
+Lo que sale en consola es lo siguiente:
+Naofumi invoca el Escudo de Ira y bloquea el ataque enemigo.
+Naofumi subió al nivel 38.
+⚔️Raphtalia ataca con su Espada.
+Filo se transforma en su forma de Ave Gigante.
+Filo corre a velocidad 50.
+Quimera jefe final de la segunda ola de la calamidad aparece.
+Quimera recibió 55 de daño. Vida restante: 45
+Misión 'Defender al pueblo de la ola de la calamidad': Proteger a los aldeanos del ataque del monstruo. Estado: Pendiente ⏳
+La misión 'Defender al pueblo de la ola de la calamidad' ha sido completada.
+*/
+
+// Clase 1: Héroe del Escudo (Naofumi)
+class HeroeDelEscudo {
+    var nombre: String
+    var nivel: Int
+    var defensa: Int
+    var escudo: String
+    
+    init(nombre: String, nivel: Int, defensa: Int, escudo: String){
+        self.nombre = nombre
+        self.nivel = nivel
+        self.defensa = defensa
+        self.escudo = escudo
+    }
+    
+    func defenderse() -> String {
+        // Siempre mostrará el Escudo de Ira en la consola
+        return "\(nombre) invoca el Escudo de Ira y bloquea el ataque enemigo."
+    }
+    
+    func subir_nivel(){
+        nivel += 37
+        // Quitamos la defensa en consola, solo mostramos el nivel
+        print("\(nombre) subió al nivel \(nivel).")
+    }
+}
+
+// Clase 2: Compañera Raphtalia
+class Companera {
+    var nombre:String
+    var nivel: Int
+    var arma: String
+    
+    init(nombre: String, nivel: Int, arma: String){
+        self.nombre = nombre
+        self.nivel = nivel
+        self.arma = arma
+    }
+    func atacar() -> String{
+        return "⚔️ \(nombre) ataca con su \(arma)."
+    }
+}
+
+// Clase 3: Compañera Filo
+class Filo {
+    var nombre: String
+    var forma: String
+    var velocidad: Int
+    
+    init(nombre: String, forma: String, velocidad: Int){
+        self.nombre = nombre
+        self.forma = forma
+        self.velocidad = velocidad
+    }
+    func transformarse() -> String {
+        return "\(nombre) se transforma en su forma de \(forma)."
+    }
+    func correr(){
+        print("\(nombre) corre a velocidad \(velocidad).")
+    }
+}
+
+// Clase 4: Monstruo (modificada)
+class Monstruo {
+    var nombre: String
+    var vida: Int
+    
+    init(nombre: String, vida: Int){
+        self.nombre = nombre
+        self.vida = vida
+    }
+    
+    func rugir() -> String {
+        // Mensaje solicitado
+        return "\(nombre) jefe final de la segunda ola de la calamidad aparece."
+    }
+    
+    func recibir_dano(dano: Int){
+        vida -= dano
+        print("\(nombre) recibió \(dano) de daño. Vida restante: \(vida)")
+    }
+}
+
+// Clase 5: Misión
+class Mision {
+    var titulo: String
+    var descripcion: String
+    var completada: Bool = false
+    
+    init(titulo: String, descripcion: String){
+        self.titulo = titulo
+        self.descripcion = descripcion
+    }
+    func mostrar() -> String{
+        return "Misión '\(titulo)': \(descripcion). Estado: \(completada ? "Completada ✅" : "Pendiente ⏳")"
+    }
+    func completar(){
+        completada = true
+        print("La misión '\(titulo)' ha sido completada.")
+    }
+}
+
+// Crear instancias de las clases
+let naofumi = HeroeDelEscudo(nombre: "Naofumi", nivel: 1, defensa: 20, escudo: "Escudo del Héroe")
+let raphtalia = Companera(nombre: "Raphtalia", nivel: 1, arma: "Espada")
+let filo = Filo(nombre: "Filo", forma: "Ave Gigante", velocidad: 50)
+// Monstruo Quimera
+let monstruo = Monstruo(nombre: "Quimera", vida: 100)
+let mision = Mision(titulo: "Defender al pueblo de la ola de la calamidad", descripcion: "Proteger a los aldeanos del ataque del monstruo")
+
+// Mostrar en consola con print()
+print(naofumi.defenderse())   // Ahora usa el Escudo de Ira
+naofumi.subir_nivel()         // muestra el nivel de naofumi
+
+print(raphtalia.atacar())
+
+print(filo.transformarse())
+filo.correr()
+
+print(monstruo.rugir())          // Quimera jefe final de la segunda ola de la calamidad aparece.
+monstruo.recibir_dano(dano: 55)  // Quimera recibió 55 de daño. Vida restante: 45
+
+print(mision.mostrar())          // Estado inicial
+mision.completar()               // Aquí ya muestra el mensaje final
