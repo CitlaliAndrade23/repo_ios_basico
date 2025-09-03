@@ -1,0 +1,454 @@
+import Foundation
+
+//yo agregue objetos mágicos, mas jugadores y ver si el que estaba contando gano o perdió.
+enum RolesJuegoEscondidas{
+    case contando
+    case buscando_jugadores
+
+    case buscando_escondite
+    case escondido
+    case regresando_a_base
+    case encontrado
+
+    case cantar_victoria
+    case suspendido /// Es el caso en que el juego vuelve a su estado original de inicio.
+}
+
+// Objetos mágicos que agregué al juego.
+// - capaDeInvisibilidad: baja visibilidad a 0.0 por 1 turno.
+// - orbeDeRevelacion: me dice dónde está el que busca por 1 turno.
+enum ObjetoMagico {
+    case capaDeInvisibilidad
+    case orbeDeRevelacion
+}
+
+protocol JugadorDeEscondidas: class{
+    var rol: RolesJuegoEscondidas { get set }
+    var compañeros_de_juego: [JugadorDeEscondidas] { get set }
+    var nombre: String { get set }
+    var lugar_actual: UbicacionFisica? { get set }
+    var visibilidad: Double { get set }
+
+    func actualizar() -> Bool
+
+    func establecer_rol(_ rol_nuevo: RolesJuegoEscondidas) -> Bool
+
+    func agregar_compañero(_ compañero_nuevo: JugadorDeEscondidas) -> Bool
+}
+
+extension JugadorDeEscondidas { /// Al parecer un protocol se instancia como un struct y no puede mutar el tipo de dato a menos que tenga modificado que aplciara a un tipo en especifico
+    func establecer_rol(_ rol_nuevo: RolesJuegoEscondidas) -> Bool {
+        switch(self.rol){
+            case .suspendido:
+                self.rol = rol_nuevo
+                return true
+
+            case .cantar_victoria, .encontrado:
+                if rol_nuevo == .suspendido {
+                    self.rol = rol_nuevo
+                    return true
+                }
+                return false
+
+            default:
+                return false
+        }
+    }
+}
+
+struct Ubicacion2Dimensiones{
+    var x: Int
+    var y: Int
+
+    init(_ x: Int, _ y: Int){
+        self.x = x
+        self.y = y
+    }
+}
+
+class UbicacionFisica{
+    var nombre: String
+    var lugares_cercanos: [UbicacionFisica]
+
+    //init(_ nombre: String, lugares_cercanos: [UbicacionFisica]){
+    init(_ nombre: String){
+        self.nombre = nombre
+        self.lugares_cercanos = []
+    }
+
+    func agregar_lugar(_ lugar: UbicacionFisica) -> Bool{
+        for ubicacion in lugares_cercanos{
+            if ubicacion.nombre == lugar.nombre{
+                return false
+            }
+        }
+
+        lugar.lugares_cercanos.append(self)
+        self.lugares_cercanos.append(lugar)
+
+        return true
+    }
+}
+
+class Personaje {
+    var nombre: String
+    var ubicacion: UbicacionFisica?
+
+    init(_ nombre: String){
+        self.nombre = nombre
+        self.ubicacion = nil
+    }
+
+    func establecer_ubicacion(_ nueva_ubicacion: UbicacionFisica) -> Bool{
+        if ubicacion == nil{
+            self.ubicacion = nueva_ubicacion
+            return true
+        }
+
+        if ubicacion!.nombre == nueva_ubicacion.nombre{
+            return false
+        }
+
+        ubicacion = nueva_ubicacion
+        return true
+    }
+}
+
+class PersonajeJugable: Personaje, JugadorDeEscondidas{
+    var visibilidad: Double
+    var rol: RolesJuegoEscondidas = .suspendido
+
+    var lugar_actual: UbicacionFisica?
+
+    var numero_contado: Int
+
+    var compañeros_de_juego: [JugadorDeEscondidas] = []
+
+    // Inventario y efecto que dura 1 turno
+    var inventario: [ObjetoMagico] = []  // aquí guardo los objetos que tengo
+    private var efectos_activos: [ObjetoMagico] = [] // aquí guardo qué usé este turno
+    private var visibilidad_original: Double? = nil// respaldo para restaurar visibilidad
+    private var revelando_al_buscador: Bool = false// bandera para saber si el orbe está activo
+
+    init(_ nombre: String, visibilidad: Double){
+        self.visibilidad = visibilidad
+        numero_contado = 0
+        super.init(nombre)
+        lugar_actual = nil
+    }
+
+    // Ayudante para encontrar al buscador (ya sea que este contando o buscando_jugadores)
+    private func encontrarBuscador(en jugadores: [JugadorDeEscondidas]) -> JugadorDeEscondidas? {
+        if let activo = jugadores.first(where: { $0.rol == .buscando_jugadores }) {
+            return activo
+        }
+        if let contando = jugadores.first(where: { $0.rol == .contando }) {
+            return contando
+        }
+        return nil
+    }
+
+    // Uso un objeto: lo aplico por 1 turno y lo dejo marcado para quitar al final.
+    func usarObjetoMagico(_ objeto: ObjetoMagico, jugadores: [JugadorDeEscondidas]) {
+        switch objeto {
+        case .capaDeInvisibilidad:
+        // Guardo cómo estaba mi visibilidad y la pongo en 0 por este turno.
+            if visibilidad_original == nil {
+                visibilidad_original = visibilidad
+            }
+            visibilidad = 0.0
+            efectos_activos.append(objeto)
+            print("✨ \(nombre) usa la capaDeInvisibilidad: visibilidad = 0.0 por este turno.")
+
+        case .orbeDeRevelacion:
+            revelando_al_buscador = true
+            efectos_activos.append(objeto)
+
+            // Ahora considera .contando o .buscando_jugadores
+            if let buscador = encontrarBuscador(en: jugadores),
+               let lugar = buscador.lugar_actual?.nombre {
+                print("🔮 \(nombre) usa el orbeDeRevelacion y ve al buscador en: \(lugar).")
+            } else {
+                print("🔮 \(nombre) usa el orbeDeRevelacion, pero no hay buscador o no tiene ubicación.")
+            }
+        }
+    }
+
+        // Al final del turno, quito los efectos que tiene el jugador y regreso a como lo tenia antes.
+    private func finDeTurno() {
+        for efecto in efectos_activos {
+            switch efecto {
+            case .capaDeInvisibilidad:
+                if let original = visibilidad_original {
+                    visibilidad = original
+                    visibilidad_original = nil
+                }
+            case .orbeDeRevelacion:
+                revelando_al_buscador = false
+            }
+        }
+        efectos_activos.removeAll()
+    }
+
+    func actualizar() -> Bool{
+        switch(rol){
+            case .contando:
+                self.contar_para_buscar()
+
+            case .buscando_jugadores:
+                self.identificar_jugadores()
+                self.moverse_de_lugar()
+
+            case .buscando_escondite:
+                self.moverse_de_lugar()
+
+                let quedarse_quieto = Int.random(in: 0...10)
+                if quedarse_quieto % 5 == 0{
+                    self.rol = .escondido
+                }
+
+            case .cantar_victoria:
+                print("TODO")// VAlidar que ya ganoo
+
+            case .suspendido:
+                print("YO \(nombre) he perdido")
+
+            default:
+                print("todo")
+        }
+
+        // Al final del turno se quitan los efectos
+        finDeTurno()
+        return false
+    }
+
+    func identificar_jugadores(){
+        for compañero in compañeros_de_juego{
+            if compañero.lugar_actual?.nombre == self.lugar_actual?.nombre{
+                let probabildiad_de_omitir = Int(compañero.visibilidad * 100)
+
+                let suerte = Int.random(in: 0...100)
+
+                if suerte > probabildiad_de_omitir{
+                    compañero.rol = .suspendido
+                }
+            }
+        }
+    }
+
+    func moverse_de_lugar(){
+        guard let actuales = lugar_actual?.lugares_cercanos, !actuales.isEmpty else { return }
+        let indice_de_nuevo_lugar = Int.random(in: 0..<actuales.count)
+        let nuevo_lugar = actuales[indice_de_nuevo_lugar]
+
+        let deberia_de_cambiar = Int.random(in: 0...10)
+
+        if deberia_de_cambiar % 2 == 0 {
+            cambiar_de_lugar_a(nuevo_lugar)
+        }
+    }
+
+    func contar_para_buscar(){
+        numero_contado += 1
+        print("Soy \(nombre) y voy en el \(numero_contado)")
+
+        if numero_contado > 10{
+            self.rol = .buscando_jugadores
+        }
+    }
+
+    func cambiar_de_lugar_a(_ ubicacion: UbicacionFisica) -> Bool{
+        if self.lugar_actual == nil {
+            self.lugar_actual = ubicacion
+            return true
+        }
+
+        if ubicacion.nombre == self.lugar_actual!.nombre{
+            return false
+        }
+
+        lugar_actual = ubicacion
+        return true
+    }
+
+    func agregar_compañero(_ compañero_nuevo: JugadorDeEscondidas) -> Bool{
+        if compañero_nuevo.nombre == self.nombre{
+            return false
+        }
+
+        for compañero in compañeros_de_juego{
+            if compañero.nombre == compañero_nuevo.nombre{
+                return false
+            }
+        }
+
+        compañeros_de_juego.append(compañero_nuevo)
+        return true
+    }
+}
+
+// Guardo quién fue elegido como buscador al inicio para que aparezca al final.
+var buscadorGlobal: JugadorDeEscondidas? = nil
+// Elijo al buscador al azar, lo pongo a contar y a los demás los pongo a esconderse.
+func iniciar_juego(jugadores: [JugadorDeEscondidas]) {
+    let numero_del_jugador_que_busca = Int.random(in: 0..<jugadores.count)
+    let jugador_que_busca: JugadorDeEscondidas = jugadores[numero_del_jugador_que_busca]
+
+    // VICTORIA/DERROTA: recordar al buscador
+    buscadorGlobal = jugador_que_busca
+
+    jugador_que_busca.establecer_rol(.contando)
+
+    for jugador in jugadores {
+        jugador_que_busca.agregar_compañero(jugador)
+
+        if jugador.rol == .suspendido{
+            jugador.establecer_rol(.buscando_escondite)
+        }
+    }
+
+    // print("el numero del jugador es \(jugador_que_busca)")
+}
+
+let punto_de_inicio = Ubicacion2Dimensiones(1, 3)
+
+var jugadores: [PersonajeJugable] = []
+
+// Mis jugadores originales
+jugadores.append(PersonajeJugable("Pepito Bananas", visibilidad: 0.5))
+jugadores.append(PersonajeJugable("Wally", visibilidad: 0.1))
+jugadores.append(PersonajeJugable("Chuchito", visibilidad: 0.2))
+jugadores.append(PersonajeJugable("Anabelle", visibilidad: 0.9))
+
+// Agrege más jugadores 
+jugadores.append(PersonajeJugable("María", visibilidad: 0.20))
+jugadores.append(PersonajeJugable("José", visibilidad: 0.75))
+jugadores.append(PersonajeJugable("Carla", visibilidad: 0.40))
+jugadores.append(PersonajeJugable("Luis", visibilidad: 0.55))
+jugadores.append(PersonajeJugable("Sofía", visibilidad: 0.15))
+jugadores.append(PersonajeJugable("Andrés", visibilidad: 0.60))
+
+let loby = UbicacionFisica("Loby")
+let oficina = UbicacionFisica("Oficina")
+let sala_de_estar = UbicacionFisica("Sala de estar")
+let salon = UbicacionFisica("Salon")
+let baños = UbicacionFisica("Baños")
+
+// Loby --- sala_de_estar
+loby.agregar_lugar(sala_de_estar)
+
+// Loby --- Salon
+loby.agregar_lugar(salon)
+
+// Loby --- oficina
+loby.agregar_lugar(oficina)
+
+// sala_de_estar --- Baño
+sala_de_estar.agregar_lugar(baños)
+
+// Salon --- Baño
+salon.agregar_lugar(baños)
+
+var ubicaciones_juego: [UbicacionFisica] = []
+ubicaciones_juego.append(loby)
+
+iniciar_juego(jugadores: jugadores)
+
+// Todos inician en el lobby
+for jugador in jugadores{
+    jugador.cambiar_de_lugar_a(loby)
+}
+
+// Inventario al inicio del juego
+// Pepito tendrá la capaDeInvisibilidad y Wally el orbeDeRevelacion
+if jugadores.count >= 2 {
+    jugadores[0].inventario = [.capaDeInvisibilidad] // Pepito Bananas
+    jugadores[1].inventario = [.orbeDeRevelacion]    // Wally
+}
+
+// Si ya tengo a los 10, doy más objetos a algunos.
+if jugadores.count >= 10 {
+    // índices: 0 Pepito, 1 Wally, 2 Chuchito, 3 Anabelle,
+    // 4 María, 5 José, 6 Carla, 7 Luis, 8 Sofía, 9 Andrés
+    jugadores[3].inventario = [.capaDeInvisibilidad] // Anabelle (muy visible)
+    jugadores[4].inventario = [.capaDeInvisibilidad] // María (más sigilosa)
+    jugadores[6].inventario = [.orbeDeRevelacion]    // Carla observa al buscador
+    jugadores[8].inventario = [.capaDeInvisibilidad] // Sofía casi invisible
+    jugadores[9].inventario = [.orbeDeRevelacion]    // Andrés estratégico
+}
+/// Aqui tenemos la parte de auto juego
+var ciclo_actual = 0
+
+let MAX_CICLOS = 25 // tope de turnos; si llego aquí sin encontrar a todos, el buscador pierde.
+
+
+// Aqui va mi juego
+while true {
+//para que ciertos jugadores usen su primer objeto en turnos específicos, solo si lo tienen
+if ciclo_actual == 2, !jugadores[0].inventario.isEmpty { // Pepito
+    let obj = jugadores[0].inventario.removeFirst()   // saca y “consume” el primer objeto
+        jugadores[0].usarObjetoMagico(obj, jugadores: jugadores) // aplica su efecto por 1 turno
+    }
+
+    if ciclo_actual == 3, !jugadores[1].inventario.isEmpty { // Wally
+        let obj = jugadores[1].inventario.removeFirst()
+        jugadores[1].usarObjetoMagico(obj, jugadores: jugadores)
+    }
+
+    if ciclo_actual == 4, jugadores.count > 4, !jugadores[4].inventario.isEmpty { // María
+        let obj = jugadores[4].inventario.removeFirst()
+        jugadores[4].usarObjetoMagico(obj, jugadores: jugadores)
+    }
+
+    if ciclo_actual == 5, jugadores.count > 6, !jugadores[6].inventario.isEmpty { // Carla
+        let obj = jugadores[6].inventario.removeFirst()
+        jugadores[6].usarObjetoMagico(obj, jugadores: jugadores)
+    }
+
+    if ciclo_actual == 6, jugadores.count > 8, !jugadores[8].inventario.isEmpty { // Sofía
+        let obj = jugadores[8].inventario.removeFirst()
+        jugadores[8].usarObjetoMagico(obj, jugadores: jugadores)
+    }
+
+    if ciclo_actual == 7, jugadores.count > 9, !jugadores[9].inventario.isEmpty { // Andrés
+        let obj = jugadores[9].inventario.removeFirst()
+        jugadores[9].usarObjetoMagico(obj, jugadores: jugadores)
+    }
+
+    for jugador in jugadores{
+        jugador.actualizar()
+    }
+
+    for jugador in jugadores{
+        print("El rol de \(jugador.nombre) es \(jugador.rol)")
+        print("Estoy en: \(jugador.lugar_actual?.nombre ?? "No se")")
+        print("Mis compañeros son: \(jugador.compañeros_de_juego.count)")
+    }
+    print("")
+
+    // Si el buscador ya encontró a todos (nadie sigue escondido), gana.
+    // Si se acaba el tiempo y todavía hay escondidos, pierde.
+    if let buscador = buscadorGlobal {
+        // Consideramos "no encontrados" a quienes siguen escondiéndose
+        let restantes = jugadores.filter {
+            // Excluye al buscador comparando por nombre
+            $0.nombre != buscador.nombre &&
+            ($0.rol == .escondido || $0.rol == .buscando_escondite || $0.rol == .regresando_a_base)
+        }
+
+        if restantes.isEmpty {
+            print("🎉 El buscador \(buscador.nombre) GANÓ, encontró a todos los jugadores.")
+            break
+        }
+
+        if ciclo_actual >= MAX_CICLOS {
+            print("💀 El buscador \(buscador.nombre) PERDIÓ, quedaron jugadores sin encontrar:")
+            let nombresRestantes = restantes.map { $0.nombre }.joined(separator: ", ")
+            print("   • Restantes: \(nombresRestantes)")
+            break
+        }
+    }
+
+    ciclo_actual += 1
+}
+
